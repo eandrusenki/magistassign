@@ -1,0 +1,178 @@
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<!-- TO DO: Add a map title -->
+	<title>Population Information of Cities Named Elizabeth</title>
+	<!-- TO DO: Import Bootstrap (first), Leaflet (second), and ColorBrewer (third) if needed -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+     crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+     integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+     crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@latest/dist/Leaflet.VectorGrid.bundled.js"></script>
+    <script src = "https://colorbrewer2.org/export/colorbrewer.js"></script>
+	<!-- -->
+    <style>
+        #map{
+            height: 700px;
+            margin-top: 30px;
+        }
+        #legend {
+			background-color: #FFFFFF;
+			border: 2px solid rgba(0,0,0,2);
+			padding: 5px;
+
+		}
+		#legendtitle {
+			font-weight:bold ;
+			border-bottom: 1px solid rgba(0,0,0,2);
+			margin-bottom: 5px;
+			padding-bottom: 5px;
+		}
+		.legendrow {
+			display: table;
+			padding-bottom: 5px;
+			padding-left: 5px;
+		}
+		.legendcolor {
+			display: table-cell;
+			width: 30px;
+			height: 30px;
+			padding-bottom: 5px;
+			padding-left: 5px;
+		}
+		.legendcaption {
+			display: table-cell;
+			padding-bottom: 5px;
+			padding-left: 5px;
+			vertical-align: middle;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="column">
+				<h3>Results of the U.S. Presidential Election</h3>
+				<h5>Votes Cast by Precinct</h5>
+			</div>
+		</div>
+        <hr/>
+		<div class="row">
+			<div class="column">
+                <p>Select a Tile Rendering Mode</p>
+                <select  id="select-mode" class="form-select" aria-label="Rendering Mode Selection" onchange="drawMap()">
+                    <option value = "vector" selected>Vector</option>
+                    <option value="image">Image</option>
+                </select>
+			</div>
+		</div>
+        <div class="row">
+			<div class="column">
+            <div id="map"></div>
+			</div>
+		</div>
+	</div>
+	<div id="legend">
+		<div id="legendtitle">Margin of Vote Share</div>
+		<div class = "legendrow">
+			<div class = "legendcolor" style= "background-color: #b2182b"></div>
+			<div class = "legendcaption"> Trump +50% or Greater</div>
+		</div>
+		<div class = "legendrow">
+			<div class = "legendcolor" style= "background-color: #ef8a62"></div>
+			<div class = "legendcaption"> Trump +25% - +50% </div>
+		</div>
+        <div class = "legendrow">
+            <div class = "legendcolor" style= "background-color: #fddbc7"></div>
+            <div class = "legendcaption"> Trump +0% - +25%</div>
+        </div>
+        <div class = "legendrow">
+			<div class = "legendcolor" style= "background-color: #d1e5f0"></div>
+			<div class = "legendcaption"> Biden +0% - +25%</div>
+		</div>
+		<div class = "legendrow">
+			<div class = "legendcolor" style= "background-color: #67a9cf"></div>
+			<div class = "legendcaption"> Biden +25% - +50% </div>
+		</div>
+        <div class = "legendrow">
+            <div class = "legendcolor" style= "background-color: #2166ac"></div>
+            <div class = "legendcaption"> Biden +50% or Greater </div>
+        </div>
+	</div>
+</body>
+</html>
+<script type="text/javascript">
+
+let highlight = null;
+let precincts = null;
+let map = L.map('map').setView([34.05,-118.3], 12);
+
+
+function drawMap() {
+    let modeSelect = document.getElementById("select-mode");
+    let mode = modeSelect.options[modeSelect.selectedIndex].value;
+    if (precincts != null) map.removeLayer(precincts);
+    if (mode == 'vector'){
+        precincts = L.vectorGrid.protobuf('http://localhost:8880/geoserver/gwc/service/tms/1.0.0/geog414:precincts@EPSG%3A900913@pbf/{z}/{x}/{-y}.pbf',{
+            vectorTileLayerStyles:{
+                precincts: function(properties){
+                    return{
+                        weight: 0.2,
+                        color: '#888888',
+                        fillOpacity: 0.5,
+                        fillColor: '#cccccc',
+                        fill: true,
+                    }
+                }
+            }
+        }).addTo(map)
+    }
+    if (mode == 'image') {
+        precincts = L.tileLayer.wms("http://localhost:8080/geoserver/geog414/wms", {
+            layers: 'geog414:precincts',
+            opacity: 0.5,
+            detectRetina: true,
+            format: 'image/png',
+            transparent: true,
+            attribution: "Election Data: NY Times"
+        }).addTo(map);
+    }
+}
+
+
+let basemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+	subdomains: 'abcd',
+	maxZoom: 20
+}).addTo(map);
+
+
+map.on("click", function(e){
+    let url = `http://localhost:8080/geoserver/geog414/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geog414%3Aprecincts&maxFeatures=50&outputFormat=application%2Fjson&srsName=EPSG:4326&bbox=${e.latlng.lng},${e.latlng.lat},${e.latlng.lng+0.0000000001},${e.latlng.lat+0.0000000001}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (highlight != null) map.removeLayer(highlight);
+            highlight = L.geoJSON(data)
+            .bindPopup(function(layer){
+                return `<strong>Precinct: ${layer.feature.properties.GEOID}</strong><hr/>Biden:${layer.feature.properties.votes_dem} (${Number(layer.feature.properties.pct_dem).toFixed(1)}%)<br/>Trump:${layer.feature.properties.votes_rep} (${Number(layer.feature.properties.pct_rep).toFixed(1)}%)`;
+            })
+            .addTo(map);
+            highlight.openPopup();
+
+        })
+})
+
+let legend = L.control({position: 'bottomleft'});
+legend.onAdd = function(m) {
+    return document.getElementById('legend');
+}
+legend.addTo(map)
+
+drawMap();
+
+</script>

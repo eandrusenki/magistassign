@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--*****************************************************
+
+GEOG 414: Programming for Geospatial Data Science II
+Unit 2 Assignment: Symbol Map
+
+This part of your Unit 2 assignment requires that you develop a symbol-based map using Leaflet, a popular front-end JavaScript Web mapping framework.  You will use GeoJSON source data containing point geometry and attribute data to create an interactive map.
+
+Add your work directly to this document, and once complete, submit to the course website for grading.
+
+*****************************************************-->
+
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<!-- TO DO: Add a map title -->
+	<title>Population Information of Cities Named Elizabeth</title>
+	<!-- TO DO: Import Bootstrap (first), Leaflet (second), and ColorBrewer (third) if needed -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+     crossorigin=""/>
+	 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+     integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+     crossorigin=""></script>
+    <!-- TO DO: Import GeoJSON file, converted to JS file with variable declaration -->
+	<script src = "elizabeth.js"></script>
+	<!-- -->
+    <style>
+		/* TO DO: Write custom CSS for map and legend as needed */
+		#map {
+			height: 700px
+		}
+		#map path:hover {
+			stroke: blue;
+			fill: blue;
+		}
+		#legend {
+			background-color: #FFFFFF;
+			border: 2px solid rgba(0,0,0,2);
+			padding: 5px;
+		}
+		#legendtitle {
+			font-weight:bold ;
+			border-bottom: 1px solid rgba(0,0,0,2);
+			margin-bottom: 5px;
+			padding-bottom: 5px;
+		}
+		.legendrow {
+			display: table;
+			padding-bottom: 5px;
+			padding-left: 5px;
+		}
+		.legendcolor {
+			display: table-cell;
+			width: 30px;
+			height: 30px;
+			padding-bottom: 5px;
+			padding-left: 5px;
+		}
+		.legendcaption {
+			display: table-cell;
+			padding-bottom: 5px;
+			padding-left: 5px;
+			vertical-align: middle;
+		}
+	</style>
+</head>
+<body>
+	<!-- TO DO: Create single-column Bootstrap layout with two rows: one for the map's header (title and subtitle) and another containing the map itself -->
+	<div class="container">
+		<div class="row">
+			<div class="column">
+				<h3>Population Information of Cities Named Elizabeth</h3>
+				<h5>Variables include household average income, completed college or higher and total population</h5>
+			</div>
+		</div>
+		<div class="row">
+			<div class="column">
+				<div id="map"></div>
+			</div>
+		</div>
+	</div>
+    <!-- TO DO: Outside the container, create the structure of the legend -->
+	<div id="legend">
+		<div id="legendtitle">Income of Cities</div>
+		<div class = "legendrow">
+				<div class = "legendcolor" style= "background-color: #4CAF50"></div>
+				<div class = "legendcaption"> Average Household Income Less Than $50,000</div>
+		</div>
+		<div class = "legendrow">
+			<div class = "legendcolor" style= "background-color: #081108"></div>
+			<div class = "legendcaption"> Average Household Income More Than $50,000</div>
+		</div>
+	</div>
+</body>
+</html>
+<script type="text/javascript">
+
+// TO DO: Write utility function to return fill color for symbols
+function symbolColor(income) {
+if (income < 50000) return '#4CAF50';
+else if (income > 50000) return '#081108';
+else return '#888888'
+}
+
+// TO DO: Write utility function to return radius (in pixels) for symbols
+function symbolRadius(pop){
+	if (pop >= 10000) return 30;
+	else if (pop >= 800 ) return 20;
+	else if (pop >= 500) return 15;
+	else if (pop >= 300 ) return 10;
+	else return 5;
+}
+
+// TO DO: Initialize the map with an appropriate center and zoom level
+let map = L.map('map').setView([37.090, -92.712], 5);
+
+// TO DO: Add a visually appealing and unobtrusive basemap
+let basemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+}).addTo(map);
+
+// TO DO: Add GeoJSON data layer, using pointToLayer to create each feature as a circleMarker with a specified radius, fill color, and stroke color.  Bind a tooltip showing variable values to each feature as well, within the pointToLayer function.
+let dataLayer = L.geoJson(cities, {
+	pointToLayer: function(feature, latlng){
+		return L.circleMarker(latlng,{
+			radius: symbolRadius(feature.properties.Population),
+			fillColor: symbolColor(feature.properties.AvgIncome),
+			color: symbolColor(feature.properties.AvgIncome),
+			weight: 1,
+			opacity: 1,
+		}).bindTooltip(`City Name: ${feature.properties.Name}<br/> State: ${feature.properties.State}<br/>Population: ${feature.properties.Population}<br/>Completed College: ${feature.properties.College}<br/>Avergae Household Income: ${feature.properties.AvgIncome}`);
+	}
+}).addTo(map);
+
+// TO DO: Create new Leaflet control and using the onAdd function, take the contents of the legend in the DOM and assign it to the new Leaflet control
+let legend = L.control({position: 'bottomleft'});
+legend.onAdd = function(m){
+	return document.getElementById('legend');
+}
+legend.addTo(map);
+</script>
+
